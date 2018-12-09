@@ -9,7 +9,7 @@
 
 /*
 pin definitation
-GPIO 	contents
+GPIOx 	contents
 GPIO0	Detect voltage
 GPIO1	Tact Switch 1
 GPIO2	Tact Switch 2
@@ -49,6 +49,22 @@ void SW_Init(void)
     TRISIO  = 0x06;     //GPIO1,2 are input for Switches
 }
 
+inline uint8_t SW1_Read(void)
+{
+    return (uint8_t)GPIO1;
+}
+
+inline uint8_t SW2_Read(void)
+{
+    return (uint8_t)GPIO2;
+}
+
+#define FAN_ON()    GPIO4 = 1;
+#define FAN_OFF()   GPIO4 = 0;
+
+#define STATLED_ON()    GPIO4 = 1;
+#define STATLED_OFF()   GPIO4 = 0;
+
 void ADC_Init(void)
 {
     TRISIO  |= (1<<0);  //GPIOx is input mode
@@ -65,6 +81,7 @@ uint16_t ADC_Scan_Voltage(uint8_t channel)
     ANSEL   |=   (uint8_t) (channel<<4);  //set channel select bits
     
     GO_nDONE = 1;
+    
     __delay_us(20);
     
     GO      = 1;
@@ -84,36 +101,34 @@ void BCM_Init(void)
 	
 	TMR1 = 0xFFFF;
 	
-	TMR1F = 0;
-	TMR1E = 1;
+	TMR1IF = 0;
+	TMR1IE = 1;
 	
 	PEIE = 1;
 	GIE  = 1;
 }
 
 void BCM_Set_Duty(uint8_t duty)
-{
-	if(duty>256)return;
-	
+{	
 	duty_param = duty;
 }
 
-void BCM_Interrupt(void)
+inline void BCM_Interrupt(void)
 {
 	static uint8_t bitmask = 0;
 	
-	if(TMR1E&&TMR1F)
+	if(TMR1IE&&TMR1IF)
 	{
 		if(duty_param&(1<<bitmask))
 			GPIO5 = 1;
 		else
 			GPIO5 = 0;
 		
-		TMR1 = 0xFFFF - (1<<bitmask);
+		TMR1 = 0xFFFF - (uint16_t)(1<<bitmask);
 		
 		if(++bitmask>7)bitmask = 0;
 		
-		TMR1F = 0;
+		TMR1IF = 0;
 	}
 }
 
