@@ -11,24 +11,44 @@
 pin definitation
 GPIOx 	contents
 GPIO0	Detect voltage
-GPIO1	Tact Switch 1
-GPIO2	Tact Switch 2
-GPIO3	Status LED
+GPIO1	Status LED
+GPIO2	Tact Switch 1
+GPIO3	Tact Switch 2
 GPIO4	Fan output
 GPIO5	BCM output
 */
+
+void SW_Init(void);
+inline uint8_t SW1_Read(void);
+inline uint8_t SW2_Read(void);
+
+void ADC_Init(void);
+uint16_t ADC_Scan_Voltage(uint8_t channel);
+
+#define FAN_ON()    GPIO4 = 1
+#define FAN_OFF()   GPIO4 = 0
+
+#define LED_ON()    GPIO5 = 1
+#define LED_OFF()   GPIO5 = 0
+
+#define STATLED_ON()    GPIO1 = 0
+#define STATLED_OFF()   GPIO1 = 1
 
 void main(void) 
 {
     Device_Startup();
     
-    //peripheral initialize functions etc...
+    SW_Init();
     
+    ADC_Init();
     
     while(1)
     {
-        GPIO1 = !GPIO1;
-        __delay_ms(500);
+       
+        if(ADC_Scan_Voltage(0)>511)
+            STATLED_ON();
+        else
+            STATLED_OFF();
     }       
 }
 
@@ -46,24 +66,19 @@ void Device_Startup(void)
 
 void SW_Init(void)
 {
-    TRISIO  = 0x06;     //GPIO1,2 are input for Switches
+    TRISIO  = 0x0C;     //GPIO2,3 are input for Switches
 }
 
 inline uint8_t SW1_Read(void)
 {
-    return (uint8_t)GPIO1;
+    return (uint8_t)GPIO2;
 }
 
 inline uint8_t SW2_Read(void)
 {
-    return (uint8_t)GPIO2;
+    return (uint8_t)GPIO3;
 }
 
-#define FAN_ON()    GPIO4 = 1;
-#define FAN_OFF()   GPIO4 = 0;
-
-#define STATLED_ON()    GPIO4 = 1;
-#define STATLED_OFF()   GPIO4 = 0;
 
 void ADC_Init(void)
 {
@@ -71,68 +86,18 @@ void ADC_Init(void)
     ANSEL   |= (1<<0);  //GPIOx is analog input
     ANSEL   |= (1<<4);  //A/D conversion clock source is 1/8
     
-    ADCON0  = 0x80;     //Result formed is right justified
+    ADCON0  = 0x81;     //Result formed is right justified
                         //reference voltage VDD
 }
 
 uint16_t ADC_Scan_Voltage(uint8_t channel)
 {
-    ANSEL   &=   (uint8_t)~(3<<4);        //clear channel select bits
-    ANSEL   |=   (uint8_t) (channel<<4);  //set channel select bits
+    ADCON0   &=   (uint8_t)~(3<<2);        //clear channel select bits
+    ADCON0   |=   (uint8_t) (channel<<2);  //set channel select bits
     
     GO_nDONE = 1;
-    
-    __delay_us(20);
-    
-    GO      = 1;
-    while(GO);
+   
+    while(GO_nDONE);
     
     return (uint16_t)((ADRESH<<8)|ADRESL);
 }   
-
-uint8_t duty_param = 0;
-
-void BCM_Init(void)
-{
-	T1CON &= ~(1<<6);		//Timer1 gate disable
-	T1CON &= ~(3<<4);		//input clock source 1:1
-	T1CON &= ~(1<<3);		//LP oscillator is off
-	T1CON &= ~(1<<1);		//Timer clock source is internal
-	
-	TMR1 = 0xFFFF;
-	
-	TMR1IF = 0;
-	TMR1IE = 1;
-	
-	PEIE = 1;
-	GIE  = 1;
-}
-
-void BCM_Set_Duty(uint8_t duty)
-{	
-	duty_param = duty;
-}
-
-inline void BCM_Interrupt(void)
-{
-	static uint8_t bitmask = 0;
-	
-	if(TMR1IE&&TMR1IF)
-	{
-		if(duty_param&(1<<bitmask))
-			GPIO5 = 1;
-		else
-			GPIO5 = 0;
-		
-		TMR1 = 0xFFFF - (uint16_t)(1<<bitmask);
-		
-		if(++bitmask>7)bitmask = 0;
-		
-		TMR1IF = 0;
-	}
-}
-
-void interrupt Handler(void)
-{
-   BCM_Interrupt();
-}
