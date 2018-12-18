@@ -35,7 +35,7 @@
         <platform>2</platform>
       </toolsSet>
       <packs>
-        <pack name="PIC10-12Fxxx_DFP" vendor="Microchip" version="0.1.14"/>
+        <pack name="PIC10-12Fxxx_DFP" vendor="Microchip" version="1.0.16"/>
       </packs>
       <compileType>
         <linkerTool>
