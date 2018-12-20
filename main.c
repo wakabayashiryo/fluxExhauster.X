@@ -47,25 +47,25 @@ void main(void)
     {
         if((SW1_Read()==0)&&(sw_cnt1==0))
         {
-            sw_cnt1 = 1000;
-            FAN_PINOUT = !FAN_PINOUT;
+            sw_cnt1 = 2500;
+            LED_PINOUT = !LED_PINOUT;
         }
-        else if(sw_cnt1>0)
+        else if((SW1_Read()==1)&&(sw_cnt1>0))
         {
             sw_cnt1--;
         }
 
         if((SW2_Read()==0)&&(sw_cnt2==0))
         {
-            sw_cnt2 = 1000;
+            sw_cnt2 = 2500;
             FAN_PINOUT = !FAN_PINOUT;
         }
-        else if(sw_cnt2>0)
+        else if((SW2_Read()==1)&&(sw_cnt2>0))
         {
             sw_cnt2--;
         }
         
-        if(ADC_Scan_Voltage(0)<562)
+        if(ADC_Scan_Voltage(0)<652)
             STATLED_ON();
         else
             STATLED_OFF();
@@ -106,6 +106,7 @@ inline uint8_t SW2_Read(void)
 //End voltage:4.2V = 1.05V x 4
 //Input voltage when end voltage:2.1V
 //ADC value :651
+
 void ADC_Init(void)
 {
     TRISIO  |= (1<<0);  //GPIOx is input mode
