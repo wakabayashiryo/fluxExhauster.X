@@ -7,17 +7,6 @@
 
 #include "main.h"
 
-/*
-pin definitation
-GPIOx 	contents
-GPIO0	Detect voltage
-GPIO1	Status LED
-GPIO2	Tact Switch 1
-GPIO3	Tact Switch 2
-GPIO4	Fan output
-GPIO5	BCM output
-*/
-
 void SW_Init(void);
 inline uint8_t SW1_Read(void);
 inline uint8_t SW2_Read(void);
@@ -98,14 +87,6 @@ inline uint8_t SW2_Read(void)
 {
     return (uint8_t)GPIO3;
 }
-
-//Full charged 6.0V = 1.5V x 4
-//Input voltage when full charaged: 3.0V
-//R1 = 5.6k
-//R2 = 5.6k
-//End voltage:4.2V = 1.05V x 4
-//Input voltage when end voltage:2.1V
-//ADC value :651
 
 void ADC_Init(void)
 {
