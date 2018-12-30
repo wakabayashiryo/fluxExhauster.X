@@ -71,6 +71,9 @@ void Device_Startup(void)
     WPU     = 0x00;
     
     GPIO    = 0x00;
+	
+	LED_PINOUT = 0;
+	FAN_PINOUT = 0;
 }
 
 void SW_Init(void)
